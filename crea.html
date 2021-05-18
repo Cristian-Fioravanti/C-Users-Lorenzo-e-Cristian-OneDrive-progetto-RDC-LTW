@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+	<title>Crea un nuovo Sondaggio!!</title>
+    <meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+	<SCRIPT language="javascript">  
+        function addRow(tableID) {  
+  
+            var table = document.getElementById(tableID);  
+  
+            var rowCount = table.rows.length;
+            var row = table.insertRow(table.rows.length);
+
+            var cell1 = row.insertCell(0);  
+            var element1 = document.createElement("input");  
+            element1.type = "checkbox";
+            element1.name = "chk";
+            element1.setAttribute("onchange", 'abilitaCancella("datatable","cancella")');
+            element1.setAttribute("class", "form-check-input"); 
+            element1.style="margin-bottom: 4px; margin-left: -1px;"      
+            cell1.appendChild(element1);  
+  
+            var cell2 = row.insertCell(1);
+            cell2.style="padding: 10px;";  
+            cell2.innerHTML = rowCount + 1;  
+  
+            var cell3 = row.insertCell(2);  
+            var element2 = document.createElement("input");  
+            element2.type = "text";
+            element2.setAttribute("class", "form-control");
+            element2.name = "risposta";
+            element2.placeholder="Scrivi la risposta...";
+            element2.required= true;
+            cell3.appendChild(element2);  
+
+            aggiornaTable(tableID);
+        }  
+  
+        function deleteRow(tableID,tutte) {  
+            try {  
+            var table = document.getElementById(tableID);  
+            var rowCount = table.rows.length;  
+  
+            for(var i=0; i<rowCount; i++) {  
+                var row = table.rows[i];  
+                var chkbox = row.cells[0].childNodes[0];  
+                if(tutte){
+                    table.deleteRow(i);  
+                    rowCount--;  
+                    i--; 
+                }
+                else if(null != chkbox && true == chkbox.checked) {  
+                    table.deleteRow(i);  
+                    rowCount--;  
+                    i--;  
+                }
+            }
+            if (rowCount<2) {
+                addRow(tableID);
+                rowCount++;
+                if(rowCount==1)
+                    addRow(tableID);
+            
+            }
+            aggiornaTable(tableID);
+            abilitaCancella(tableID,'cancella');  
+            }catch(e) {  
+                alert(e);  
+            }  
+        }
+        
+        function aggiornaTable(tableID){
+            try {
+            var table = document.getElementById(tableID);
+            var rowCount = table.rows.length;
+            var count= 1;
+            for(var i=0; i<rowCount; i++){
+                var row = table.rows[i];
+                var num = row.cells[1].innerHTML;
+                if(count != num) {
+                    row.cells[1].innerHTML = count;
+                }
+                count++;
+            }
+            } catch(e) {
+                alert("Errore"+e);
+            }
+        }
+
+        function abilitaCancella(tableID,cancellaID){
+            var table = document.getElementById(tableID);
+            var rowCount = table.rows.length;
+            for(var i=0; i<rowCount; i++){
+                var row = table.rows[i];
+                var chk = row.cells[0].childNodes[0];
+                if(chk.checked == true) {
+                    document.getElementById(cancellaID).disabled= false;
+                    return;
+                }
+            }
+            document.getElementById(cancellaID).disabled= true;
+        }
+    </SCRIPT>  
+	</head>
+<body style="background-color: rgb(61, 73, 236);">
+    <form action="/post?aggiorna=false" method="POST" name="form" >
+        <div class="container p-3 mb-2 bg-dark text-white">
+            <h1 align="center" class="ombra">Crea il tuo sondaggio!</h1>
+            <br>
+            <div class="row row-cols-3">
+                <div class="col">
+                   <p class="fs-4"class="ombra">Inserisci qui la tua domanda: </p> 
+                </div>
+                <div class="col">
+                    <input  style="margin-left: -70px;" type="text" class="form-control" name="domanda" id="" placeholder="Scrivi qui la domanda...">
+                </div>
+            </div>
+            <TABLE id="datatable" width="350px">  
+                <div id="div">
+                    <TR>  
+                        <td><INPUT type="checkbox" style="margin-bottom: 4px; margin-left: -1px;" class="form-check-input" name="chk" onchange="abilitaCancella('datatable','cancella')"/></td>
+                        <td style="padding: 10px;"> 1  </td>
+                        <td><INPUT class="form-control" name="risposta" type="text" required  placeholder="Scrivi la risposta..."></td>
+                    </TR>
+                    <TR>  
+                        <td><INPUT type="checkbox" style="margin-bottom: 4px; margin-left: -1px;" class="form-check-input" name="chk" onchange="abilitaCancella('datatable','cancella')"/></td>
+                        <td style="padding: 10px;"> 2  </td>
+                        <td><INPUT class="form-control" name="risposta" type="text" required  placeholder="Scrivi la risposta..."></td>
+                    </TR>
+                </div>  
+            </TABLE>
+            <br>
+            <INPUT type="button" value="Aggiungi una Risposta" class="btn btn-success ombra" onclick="addRow('datatable')" />
+            <INPUT type="button" value="Cancella una Risposta " class="btn btn-danger ombra" id="cancella" onclick="deleteRow('datatable',false)" disabled/>
+            <div style="margin-top: 13px;">
+                <input type="reset" class="btn btn-warning ombra" style="color: floralwhite;" value="Reset" onclick="deleteRow('datatable',true)">
+                <input type="submit" class="btn btn-primary ombra" value="Invia"> 
+            </div>
+        </div>
+    </form>
+</body>
+</html>

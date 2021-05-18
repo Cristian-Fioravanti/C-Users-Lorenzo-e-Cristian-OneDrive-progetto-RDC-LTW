@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+    <title>Grazie!</title>
+</head>
+<body onload="caricaDati()" style="background-color: rgb(61, 73, 236) ;">
+    <div class="container bg-dark text-white" >
+        <div class="mb-3 text-center" style="margin-top: 10px;">
+            <h1 style=" text-shadow: 2px 2px 4px #000000">
+                Grazie per aver votato il sondaggio con<br> 
+                <p align="center" class="m-5" >
+                    <font style="text-decoration: none; font-family: Script; font-size:80px; line-height: 20px; letter-spacing: 1; text-shadow: 2px 2px 4px #000000">EasySurvey
+                    </font>
+                </p>
+            </h1>
+            <a href="http://localhost:3000/"><img src="logo.png" width="250px" height="250px" style="margin-bottom: 5px;"></a>
+
+    
+            <h2 class="p-3" style=" text-shadow: 2px 2px 4px #000000">Crea anche tu il tuo sondaggio!</h2>
+            <button class="btn btn-primary" style="margin-bottom: 30px;" id="bottone"><h3 style=" text-shadow: 2px 2px 4px #000000">Clicca qui!</h3></button>
+        </div>
+    </div>
+    <script>
+             $(document).on('click', '#bottone', function(){ 
+                window.location="http://localhost:3000/";
+             });
+    </script>
+</body>
+</html>

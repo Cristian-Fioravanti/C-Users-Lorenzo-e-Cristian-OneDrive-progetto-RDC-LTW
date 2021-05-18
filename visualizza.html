@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+    <title>Visualizza il sondaggio</title>
+</head>
+<body onload="caricaSondaggi()" style="background-color: rgb(61, 73, 236) ;">
+    
+    <div class="p-3 mb-2 bg-dark text-white">
+        <div class="container p-3 mb-2 bg-dark text-white">
+            <div class="row row-cols-3">
+                <div class="col-sm-8" id="divdom1"></div>
+                <div class="col-sm-4" id = "divdom3">
+                    <button id="elimina" class="btn btn-danger ombra">Elimina Sondaggio</button>
+                    <button id="modifica" class="btn btn-warning" style="text-shadow: 1px 1px 3px #000000; color:white">Modifica Sondaggio</button>
+                    <br>
+                    <br>
+                    <div class="col">
+                        <button type="button" id="condividi" class="btn btn-primary ombra" style="width: max-content;">Condividi su Facebook <img src="https://www.facebook.com/images/fb_icon_325x325.png" width="40px" height="40px"></button>
+                    </div>
+                    <br>
+                    
+                    
+                </div>      
+            </div>
+                <div class="row row-cols">
+                    <div class="col-8" id=""><p class="fs-2 ombra">Le Risposte sono:</p></div>
+                    <div class="col" id="bottone" style="margin-top: 10px;">
+                        <input style="margin-left: 10px;" type="text" id="link" size="20" readonly>
+                        <button class="btn btn-secondary ombra" onclick="copia('link')" id="copiabtn" >copia</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="background-color: rgb(61, 73, 236);">
+        <div class="row row-cols-1">
+            <div class="col"> 
+                <div class="row row-cols-1" id="listrisp"> 
+                  
+                </div> 
+            </div>
+        </div>
+    <div class="container" style="background-color:rgb(61, 73, 236) ;align-self: center;">
+        <div class="container">
+            <h3 class="" style="color: honeydew;">Classifica risposte</h3>
+                <div class="row row-cols-4 p-3 mb-2 bg-dark text-white fs-5" >
+                    <div align="center" class="col-sm-2 ombra fs-5" style="align-content: center;">#</div>
+                    <div class="col-sm-3 ombra "><p align="center" class="fs-5">Risposta</p></div>
+                    <div align="center" class="col-sm-3 ombra fs-5 ">Voto</div>
+                    <div align="center" class="col-sm-4 ombra fs-5">Immagine</div>
+                    <hr></hr>
+                    <hr></hr>
+                    <hr></hr>
+                    <hr></hr>
+                </div>
+                    <div id="divclassifica" class="row row-cols-4 p-3 mb-2 bg-dark text-white" style="margin-top: -10px;">
+                        
+                    </div>
+                    <img src="">
+                </div>
+            </div>
+        </div>
+    </div>
+   
+    <script>
+        //Attivo il sondaggio
+        $(document).on('click', '#disattivo', function(){ 
+            $("#disattivo").attr('class',"btn btn-success")
+            $("#disattivo").html("Attivo");  
+            $("#condividi").text("Fai votare su Facebook");
+            $("#modifica").attr("disabled",true);
+            $("#elimina").attr("disabled",true);
+            $("#copiabtn").removeAttr("style")
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:3000/attiva_sondaggio"+window.location.search,
+                success: function(result){
+                    $("#link").attr("value",JSON.parse(result).url);
+                    attivaSocket(JSON.parse(result).parola, window.location.search.substring(4));
+                    $("#disattivo").attr("id","attivo");
+                    
+                },
+                error: function(e){
+                    alert("Errore"+e);
+                }
+            })
+           
+        });
+        function attivaSocket(parola,id){
+            console.log(id);
+            if ("WebSocket" in window)
+            {
+               var ws = new WebSocket("ws://localhost:9998/");
+
+               ws.onopen = function()
+               {
+                  // Web Socket is connected, send data using send()
+                  var oggetto={};
+                  oggetto.parola=parola;
+                  oggetto.sondaggio=id;
+                  ws.send(JSON.stringify(oggetto));
+               };
+
+               ws.onmessage = function (evt)
+               {
+                   
+                  var received_msg = evt.data;
+                  console.log(received_msg);
+                  if(received_msg=="verificato"){
+                      console.log("web socket attivato");
+                  }else if(received_msg==false){
+                      console.log("errore");
+                  }else{
+                    //chiamare una funziona che cambia la classifica   
+                    var oggetto=JSON.parse(received_msg);
+                    tabella(oggetto);
+                  }
+               };
+
+               ws.onclose = function()
+               {
+                  // websocket is closed.
+                  //alert("Connection is closed...");
+               };
+
+               window.onbeforeunload = function(event) {
+                  socket.close();
+               };
+            }
+
+            else
+            {
+               // The browser doesn't support WebSocket
+               alert("WebSocket NOT supported by your Browser!");
+            }
+        }
+
+        function copia(testo) {
+            var input = document.createElement('input');
+            var area = document.getElementById(testo).value;
+            input.setAttribute('value', area);
+            document.body.appendChild(input);
+            input.select();
+            var risultato = document.execCommand('copy');
+            document.body.removeChild(input);
+            return risultato;
+        }
+
+        //Disattivo il sondaggio
+        $(document).on('click', '#attivo', function(){ 
+            $("#attivo").html("Disattivo");    
+            $("#attivo").attr('class',"btn btn-danger")
+            $("#link").attr("value","");
+            $("#condividi").text("Condividi su Facebook");
+            $("#modifica").attr("disabled",false);
+            $("#elimina").attr("disabled",false);
+            $("#copiabtn").attr("style","visibility: hidden")
+            $.ajax({
+                    type: "GET",
+                    url: "http://localhost:3000/disattiva_sondaggio"+window.location.search,
+                    success: function(result){
+                        $("#attivo").attr("id","disattivo");
+                    },
+                    error: function(e){
+                        alert("Errore"+e);
+                    }
+                })
+        })
+
+        $(document).ready(function(){
+            $("#elimina").on("click",function(e){
+                $.ajax({
+                    type: "GET",
+                    url: "http://localhost:3000/elimina"+window.location.search,
+                    success: function(result){
+                        window.location = result;
+                    },
+                    error: function(e){
+                        alert("Errore"+e);
+                    }
+                })
+            });
+            $('#condividi').on("click",function(e){
+                $.ajax({
+                    type: "GET",
+                    url: "http://localhost:3000/condividi"+window.location.search,
+                    success: function(result){
+                        window.open(result,"poppopupWindow", "top=100,scrollbars=yes");
+                    },
+                    error: function(e){
+                        alert("Errore"+e);
+                    }
+                })
+            });
+            $('#modifica').on("click",function(e){
+                window.location="http://localhost:3000/modifica"+window.location.search;
+            });
+        });
+        
+		function caricaSondaggi(e){
+            var id = window.location.search;
+			var httpRequest = new XMLHttpRequest();
+			httpRequest.onreadystatechange = reazione;
+			httpRequest.open("GET","http://localhost:3000/visualizza2"+id,true);
+			httpRequest.send();
+		}
+		function reazione(e){
+			if (e.target.readyState == XMLHttpRequest.DONE){
+				var i=0;
+                var sond= e.target.responseText;
+			   var sondparse= JSON.parse(sond)
+			   aggiungiSondaggio("divdom1",sondparse)
+			}
+        }
+
+        function aggiungiSondaggio(divID,sond){
+            var div = document.getElementById(divID);
+
+            var primo;
+            var secondo;
+            var terzo;
+            div.insertAdjacentHTML("afterbegin",'<h2 class="ombra">La domanda del sondaggio è: <br> '+sond.domanda+'</h2>');
+               
+            var listrisp= document.getElementById("listrisp")
+            var i=0;
+            var dim= sond.risposte.length
+            var contavoti;   
+            for(i;i<dim;i++){
+                listrisp.insertAdjacentHTML("beforebegin",'<div class="col p-3 mb-2 bg-dark text-white ombra fs-5">'+sond.risposte[i][0]+'</div>');  
+            }
+                
+            i=0;
+            contavoti=0; 
+        
+              
+            tabella(sond);
+            
+        
+            var bottone= document.getElementById("bottone");
+            if (sond.attivo) {
+                $.ajax({
+                    type: "GET",
+                    url: "http://localhost:3000/attiva_sondaggio"+window.location.search,
+                    success: function(result){
+                        $("#link").attr("value",JSON.parse(result).url);
+                        attivaSocket(JSON.parse(result).parola, window.location.search.substring(4));
+                    },
+                    error: function(e){
+                        alert("Errore"+e);
+                    }
+                });
+                bottone.insertAdjacentHTML("afterbegin",'<button class="btn btn-success ombra" id="attivo">Attivo</button>');
+                document.getElementById("condividi").innerHTML = "Fai votare su Facebook";
+                $("#modifica").attr("disabled",true);
+                $("#elimina").attr("disabled",true);
+            }
+            else {
+                bottone.insertAdjacentHTML("afterbegin",'<button class="btn btn-danger ombra" id="disattivo">Disattivo</button>')
+                document.getElementById("link").value = "";
+                document.getElementById("condividi").innerHTML = "Condividi su Facebook";
+                $("#copiabtn").attr("style","visibility: hidden")
+            }
+        }
+
+        function tabella(sond){
+            $("#divclassifica").empty();
+            var totalevoti = sommapunti(sond.risposte);   
+            var dim= sond.risposte.length;
+            var i=0;
+            for(i ; i<dim ;i++){
+                var divclassifica = document.getElementById("divclassifica")
+                divclassifica.insertAdjacentHTML("beforeend",'<div class="col-sm-2 p-5 ombra" id="num'+i+'"></div><div class="col-sm-3 p-5 ombra" id="rispdiv'+i+'"></div><div class="col-sm-3 ombra p-5 allineato" id="progresso'+i+'"><p class="fs-7"></p> </div><div align="center" class="col-sm-4 p-5 allineato" name="" id="imm'+i+'"></div>')
+                var numaux = document.getElementById("num"+i)
+                numaux.insertAdjacentHTML("beforeend",'<h4 align="center" class"allineato">'+(i+1)+'°</h4>')
+                var rispdivaux = document.getElementById("rispdiv"+i)
+                rispdivaux.insertAdjacentHTML("beforeend",'<h4 align="center" class" ombra">'+sond.risposte[i][0]+'</h4>')
+                var progressoaux = document.getElementById("progresso"+i)
+                progressoaux.insertAdjacentHTML("beforeend",'<h3 align="center" class="fs-5">'+sond.risposte[i][1]+'</h3><div class="progress" style="margin-bottom: 30px"><div align="center" class="bg-success progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="'+sond.risposte[i][1]+'" aria-valuemin="0" aria-valuemax="'+totalevoti+'" style="width:'+((sond.risposte[i][1]/totalevoti)*100)+'% "></div></div>')
+                var imm = "imm"+i;
+                var immaux = document.getElementById(imm)
+                immaux.insertAdjacentHTML("afterbegin",'<img class="flex" src="'+sond.risposte[i][2]+'">')
+            }
+        }
+
+        function sommapunti(risposte) {
+            var dim = risposte.length;
+            var i=0;
+            conta=0;
+            for(i; i<dim; i++){
+                conta+=risposte[i][1]
+            }
+            return conta
+        }
+    </script> 
+</body>
+</html>

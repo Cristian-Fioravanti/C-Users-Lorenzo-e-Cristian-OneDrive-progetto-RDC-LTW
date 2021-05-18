@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <title>Errore!</title>
+</head>
+<body onload="caricaDati()" style="background-color: rgb(61, 73, 236) ;">
+    <div class="container bg-dark text-white" >
+        <div class="mb-3 text-center" style="margin-top: 10px;">
+            <h1 style=" text-shadow: 2px 2px 4px #000000; color: rgb(202, 38, 38);">
+                Il sondaggio che stai cercando<br> non è disponibile <br></h1>
+                <h2 class="p-3" style=" text-shadow: 2px 2px 4px #000000">Ma puoi crearlo tu con <br> 
+            <label style="margin-top: 20px;"><font style="text-decoration: none; font-family: Script; font-size:60px; line-height: 20px; letter-spacing: 1; text-shadow: 2px 2px 4px #000000;">EasySurvey</font></label></h2>
+                
+            <a href="http://localhost:3000/"><img src="logo.png" width="250px" height="250px" style="margin-bottom: 5px;"></a>
+    
+            <br>
+            <br>
+            <button class="btn btn-primary" style="margin-bottom: 30px;" id="bottone"><h3 style=" text-shadow: 2px 2px 4px #000000">Clicca qui!</h3></button>
+        </div>
+    </div>
+    <script>
+             $(document).on('click', '#bottone', function(){ 
+                window.location="http://localhost:3000/";
+             });
+    </script>
+</body>
+</html>
