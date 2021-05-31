@@ -13,7 +13,7 @@ Il nostro è un servizio per creare sondaggi da far votare ad altri e poter cond
 
 ## Soddisfacimento dei requisiti:
 
-* Servizio REST: API documentate mediante [ApiDoc](http://localhost:3000/api);
+* Servizio REST: API documentate mediante [ApiDoc](https://localhost:3000/api);
 * Servizio REST di terze parti: Bing Image Search:
 * Servizio REST commerciale: Facebook;
 * Servizio OAuth: Facebook;
