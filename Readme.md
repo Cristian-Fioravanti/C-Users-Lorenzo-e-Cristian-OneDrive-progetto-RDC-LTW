@@ -25,7 +25,7 @@ Il nostro è un servizio per creare sondaggi da far votare ad altri e poter cond
 1) Aprire un terminale nella directory principale (dove si trova il file **docker-compose.yml**) ed eseguire il comando:
 <code>docker-compose up -d</code>;
 2) * Per utenti Windows : eseguire il file **db.bat**; 
-    * Per utenti con altri sistemi operativi : aprire un terminale ed eseguire i seguenti comandi: <code>docker exec -d docker_couchdb_1 curl -X PUT http://admin:admin@127.0.0.1:5984/sondaggi </code>,    <code>docker exec -d docker_couchdb_1 curl -X PUT http://admin:admin@127.0.0.1:5984/utenti </code>
+    * Per utenti con altri sistemi operativi : aprire un terminale ed eseguire i seguenti comandi: <code>docker exec -d docker_couchdb_1 curl -X PUT http://admin:admin@127.0.0.1:5984/sondaggi </code>,    <code>docker exec -d docker_couchdb_1 curl -X PUT http://admin:admin@127.0.0.1:5984/utenti </code>;
 3) Avviare il server NodeJS **_Progetto.js_** : da terminale eseguire <code> node Progetto.js </code>;
 4) Dal browser visitare [questa pagina](https://localhost:3000/);
 5) Dopo l'accesso divertiti a utilizzare il nostro servizio.
