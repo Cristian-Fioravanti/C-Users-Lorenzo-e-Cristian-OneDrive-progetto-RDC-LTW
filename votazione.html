@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vota per il sondaggio!!</title>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
     <style>
@@ -15,23 +15,10 @@
     </style>
 </head>
 <body onload="caricaSondaggi();"style="background-color: rgb(61, 73, 236) ;">
-
-    
     <div class="container bg-dark text-white" style="margin-top: 10px;" >
-        <div class="row row-cols-auto" >
-            <div class="col-3 mb-3" style="margin-top: 10px;">
-                <div class="text-center">
-                    <a href="http://localhost:3000/"><img src="logo.png" width="45px" height="45px" style="margin-bottom: 5px;"></a>
-                </div>
-                <p align="center"><font style="text-decoration: none; font-family: Script; font-size:25px; line-height: 10px; letter-spacing: 1; text-shadow: 2px 2px 4px #000000">EasySurvey</font></p>
-            </div>
-            <div class="col"><p align="center" style="visibility: hidden;"  id="benv"></p></div>
-            <div class="col" style="margin-left: 80px;">
-                <h1 align="center" id="benv" style="margin-bottom: -24px;margin-left: -16px;" class="ombra">Rispondi al Sondaggio</h1>
-                <br>
-                <p align="center" style="margin-left: -50px;" class="fs-5 ombra" id="nomecreatore"></p>
-            </div>  
-        </div>
+            <h1 align="center" style="margin-bottom: -24px;" class="ombra">Rispondi al Sondaggio</h1>
+            <br>
+            <p align="center" class="fs-5 ombra" id="nomecreatore"></p>
         <p class="fs-1 text-center p-1 mb-2" id="domanda"></p><br>     
     </div>
     <br>
@@ -55,7 +42,7 @@
             var id = window.location.search.substring(4);
 			var httpRequest = new XMLHttpRequest();
 			httpRequest.onreadystatechange = reazione;
-			httpRequest.open("GET","http://localhost:3000/sondaggio/"+id,true);
+			httpRequest.open("GET","https://localhost:3000/sondaggio/"+id,true);
 			httpRequest.send();
 		}
 		function reazione(e){
@@ -95,12 +82,13 @@
             var risposta = document.getElementsByClassName("scelto").item(0).id;
             $.ajax({
                 type: "GET",
-                url: "http://localhost:3000/vota/"+window.location.search.substring(4)+"?risposta="+risposta,
+                url: "https://localhost:3000/vota/"+window.location.search.substring(4)+"?risposta="+risposta,
                 success: function(result){
-                    window.location = "http://localhost:3000/votazione_completata";
+                    if (result == "Risposta registrata con successo") window.location = "https://localhost:3000/votazione_completata";
+                    else window.location = "https://localhost:3000/votazione_errore";
                 },
                 error: function(e){
-                    window.location = "http://localhost:3000/votazione_errore";
+                    window.location = "https://localhost:3000/votazione_errore";
                 }
             });
         });

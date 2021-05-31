@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Home</title>
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
 	<script>
+		//Aggiorna pagina quando utente usa pulsante back del browser per ricaricare la pagina
+		//e visualizzare le modifiche apportate
 		window.addEventListener( "pageshow", function ( event ) {
 			var historyTraversal = event.persisted || 
 									( typeof window.performance != "undefined" && 
@@ -25,7 +27,7 @@
 	<div style="background-color: rgb(61, 73, 236); ">
 		<br>
 		<div class="mx-auto" style="width: 500px">
-			<p align="center" class="m-2" ><font style="text-decoration: none; font-family: Script; font-size:80px; line-height: 20px; letter-spacing: 1; text-shadow: 2px 2px 4px #000000; color: floralwhite; ">EasySurvey</font></p>
+			<p align="center" class="m-2" ><font style="text-decoration: none; font-family: Script; font-size:80px; line-height: 20px; letter-spacing: 1; text-shadow: 2px 2px 4px #000000; color: floralwhite; ">EasySurvey </font></p>
 		  </div>
 		  <div class="mx-auto" style="width: 250px;">
 			<p align="center" name="utente" id="utente" class="fs-3" style="text-shadow: 2px 2px 4px #000000; color: floralwhite;"></p>
@@ -52,22 +54,23 @@
 	<script>
 		$(document).ready(function(){
 			$('#crea').on('click', function(){ 
-                window.location = "http://localhost:3000/crea";
+                window.location = "https://localhost:3000/crea";
         	});
 			$('#esci').on('click', function(){ 
-                window.location = "http://localhost:3000/logout";
+                window.location = "https://localhost:3000/logout";
         	});
 			
 		});
 
 		$(document).on('click', '[name="sondaggio"]', function(){
-			window.location = "http://localhost:3000/visualizza?id="+$(this).attr("id");	
+			window.location = "https://localhost:3000/visualizza?id="+$(this).attr("id");	
 		})
 
+		// Chiamate AJAX al server 
 		function caricaUtente(e) {
 			var httpRequest = new XMLHttpRequest();
 			httpRequest.onreadystatechange = utente;
-			httpRequest.open("GET","http://localhost:3000/caricautente",true);
+			httpRequest.open("GET","https://localhost:3000/caricautente",true);
 			httpRequest.send();
 		}
 		function utente(e){
@@ -79,7 +82,7 @@
 		function caricaSondaggi(e){
 			var httpRequest = new XMLHttpRequest();
 			httpRequest.onreadystatechange = reazione;
-			httpRequest.open("GET","http://localhost:3000/sondaggi",true);
+			httpRequest.open("GET","https://localhost:3000/sondaggi",true);
 			httpRequest.send();
 		}
 		function reazione(e){
@@ -93,11 +96,13 @@
 		function aggiungiSondaggio(tableID,sond){
 			var table = document.getElementById("rigadiv");
 			for(var i=0; i<sond.length; i++){
+				var d = sond[i].domanda;
+				if(d.length>=31) d = d.substring(0,28)+"...";
 				if (sond[i].attivo==true){
-					table.insertAdjacentHTML("beforeend",'<div class="col"><div name="sondaggio" id="'+sond[i].id+'" class="card text-white  mb-3 manina" style="max-width: 18rem;  box-shadow: 5px -10px 5px rgb(35, 134, 48); border-radius:12px; background-color: rgb(27, 190, 49); "><div class="card-header" style="color: floralwhite;border-radius:12px;text-shadow: 1px 2px 5px #000000;"><strong>Sondaggio</strong> <strong>'+(i+1)+'</strong></div><div class="card-body" style="back"><p class="card-text" style="color:floralwhite; text-shadow: 1px 2px 5px #000000;" align="center ">'+sond[i].domanda+'</p></div></div></div>');
+					table.insertAdjacentHTML("beforeend",'<div class="col"><div name="sondaggio" id="'+sond[i].id+'" class="card text-white  mb-3 manina" style="max-width: 18rem;  box-shadow: 5px -10px 5px rgb(35, 134, 48); border-radius:12px; background-color: rgb(27, 190, 49); "><div class="card-header" style="color: floralwhite;border-radius:12px;text-shadow: 1px 2px 5px #000000;"><strong>Sondaggio</strong> <strong>'+(i+1)+'</strong></div><div class="card-body" style="back"><p class="card-text" style="color:floralwhite; text-shadow: 1px 2px 5px #000000;" align="center">'+d+'</p></div></div></div>');
 				}
 				else 
-					table.insertAdjacentHTML("beforeend",'<div class="col"><div name="sondaggio" id="'+sond[i].id+'" class="card text-white mb-3 manina" style="max-width: 18rem; box-shadow: 5px -10px 5px rgb(189, 37, 88); ; border-radius:12px;  background-color: rgb(206, 37, 88); "><div class="card-header" style="color: floralwhite;border-radius:12px;text-shadow: 1px 2px 5px #000000;"><strong>Sondaggio</strong> <strong>'+(i+1)+'</strong></div><div class="card-body" style="back"><p class="card-text" style="color:floralwhite; text-shadow: 1px 2px 5px #000000;" align="center">'+sond[i].domanda+'</p></div></div></div>');
+					table.insertAdjacentHTML("beforeend",'<div class="col"><div name="sondaggio" id="'+sond[i].id+'" class="card text-white mb-3 manina" style="max-width: 18rem; box-shadow: 5px -10px 5px rgb(189, 37, 88); ; border-radius:12px;  background-color: rgb(206, 37, 88); "><div class="card-header" style="color: floralwhite;border-radius:12px;text-shadow: 1px 2px 5px #000000;"><strong>Sondaggio</strong> <strong>'+(i+1)+'</strong></div><div class="card-body" style="back; max-height=80px"><p class="card-text" style="color:floralwhite; text-shadow: 1px 2px 5px #000000;" align="center">'+d+'</p></div></div></div>');
 			}
 		}
 	</script>

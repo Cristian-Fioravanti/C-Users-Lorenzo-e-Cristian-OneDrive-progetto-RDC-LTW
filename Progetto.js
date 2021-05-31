@@ -1,17 +1,15 @@
-// https://developers.google.com/identity/protocols/OAuth2WebServer
-
+var https = require('https');
 var express = require('express');
 var request = require('request');
 var session = require('express-session');
-const fs = require('fs');
+var fs = require('fs');
 const WebSocket = require('ws');
-//const { resolve } = require('node:path');
-//const { read } = require('node:fs');
 require('dotenv').config()
-//var bodyParser = require("body-parser");
+
 
 const url_utenti= "http://admin:admin@127.0.0.1:5984/utenti";
 const url_sondaggi="http://admin:admin@127.0.0.1:5984/sondaggi";
+const pagina_root="https://localhost:3000/";
 
 var porta= 3000;
 var porta_socket=9998;
@@ -20,13 +18,18 @@ var caratteri='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 var socket_sondaggi={};
 var pass= {};
 
-/*let rawdata = fs.readFileSync('./secrets.json');
-let sec = JSON.parse(rawdata);*/
 
 client_id =process.env.CLIENT_ID;
 client_secret =process.env.SECRET;
 rapid_api_key=process.env.RAPID_API_KEY;
-red_uri="http://localhost:3000/home";
+red_uri=pagina_root+"home";
+
+var key = fs.readFileSync('./OpenSSL/key.pem');
+var cert = fs.readFileSync('./OpenSSL/cert.pem');
+var optionscert = {
+	key : key,
+	cert : cert
+};
 
 var app = express();
 app.use(express.json());
@@ -41,34 +44,34 @@ app.use(session({
 
 const wss = new WebSocket.Server({ port: porta_socket });
 
-
-var a_t = '';
-
-// scopes https://developers.google.com/identity/protocols/googlescopes
-
 //PAGINA INIZIALE
 app.get('/', function(req, res){
+	if(req.session.id_cliente) res.redirect(pagina_root+"home?code="+req.query.code);
 	res.sendFile("benvenuto.html",{root:__dirname});
 });
 
+app.get("/api",function(req,res){
+	res.sendFile("./public/api.html",{root:__dirname});
+
+});
+
+
 //LOGIN
 app.get('/login', function(req, res){
-	res.redirect("https://www.facebook.com/v10.0/dialog/oauth?response_type=code&scope=email&client_id="+client_id+"&redirect_uri=http://localhost:3000/home&client_secret="+client_secret);
+	res.redirect("https://www.facebook.com/v10.0/dialog/oauth?response_type=code&scope=email&client_id="+client_id+"&redirect_uri=https://localhost:3000/home&client_secret="+client_secret);
 });
 
 //LOGOUT
 app.get('/logout', function(req, res){
 	verifica_sessione(req.session.id_cliente, req.sessionID).then(function(result){
-		var uscito= cancella_sessione(req.session.id_cliente);
+		var uscito= cancella_sessione(req.session.id_cliente); //DB
 		uscito.then(function(result){
-			console.log("Logout effettuato");
 			req.session.destroy();
-			res.redirect("http://localhost:3000/");
+			res.redirect(pagina_root);
 		});
 	}).catch(function(){
-		console.log("Logout effettuato comunque");
 		req.session.destroy();
-		res.redirect("http://localhost:3000/");
+		res.redirect(pagina_root);
 	});
 });
 
@@ -76,28 +79,28 @@ app.get('/logout', function(req, res){
 app.get('/home', function(req,res){
 	if(req.query.error=='access_denied'){
 		console.log("Errore di permessi non autorizzati");
-		res.redirect("http://localhost:3000/");
-	} else if(req.query.code!=null){
+		res.redirect(pagina_root);
+	}
+	else if(req.query.code!=null || req.session.code!=null){
 		var code= req.query.code;
-		request.get({url:'https://graph.facebook.com/v10.0/oauth/access_token?client_id='+client_id+'&redirect_uri='+red_uri+'&client_secret='+client_secret+'&code='+code}, function optionalCallback(err, httpResponse, body) {
+		request.get({url:'https://graph.facebook.com/v10.0/oauth/access_token?client_id='+client_id+'&redirect_uri='+red_uri+'&client_secret='+client_secret+'&code='+code}, 
+		function optionalCallback(err, httpResponse, body) {
 			if (err) {
 				return console.error('upload failed:', err);
 			}
 			var info = JSON.parse(body);
 			if(info.error) {
-				res.redirect("http://localhost:3000/login");
+				res.redirect(pagina_root+"login");
 			}
 			else {
 				console.log('Upload successful!  Server responded with:', body);
-				//res.send("Got the token "+ info.access_token);
-				a_t = info.access_token;
-				getDati().then(function(infoPromise) {
+				getDati(info.access_token).then(function(infoPromise) {
 					req.session.id_cliente = infoPromise.id;
 					req.session.code = code;
+					req.session.a_t= info.access_token;
 					var id = req.session.id_cliente;
 					var ss = req.sessionID;
 					var nomecognome= infoPromise.name;
-					console.log(nomecognome);
 					var nome= nomecognome.split(" ")[0];
 					var cognome = nomecognome.split(" ")[1];
 					var aggiorna = aggiorna_sessione(id, ss, nome, cognome);
@@ -106,7 +109,7 @@ app.get('/home', function(req,res){
 							res.sendFile("home.html",{root:__dirname});
 						}
 						else{
-							res.redirect("http://localhost:3000/");
+							res.redirect(pagina_root);
 							console.log("Variabile di sessione non cambiata o inizializzata");
 						}
 					})
@@ -114,8 +117,8 @@ app.get('/home', function(req,res){
 			}
 		});
 	} else {
-		console.log("Non ha effettuato il login");
-		res.redirect("http://localhost:3000/");
+
+		res.redirect(pagina_root);
 	}
 });
 
@@ -123,12 +126,12 @@ app.get('/home', function(req,res){
 	app.get("/caricautente",function(req,res){
 		var verificato= verifica_sessione(req.session.id_cliente, req.sessionID);
 		verificato.then(function(result){
-			getDati().then(function(result){
+			getDati(req.session.a_t).then(function(result){
 				res.send(result.name);
 			});
 		}).catch(function(){
 			req.session.destroy();
-			res.redirect("http://localhost:3000/");
+			res.redirect(pagina_root);
 		});
 	});
 
@@ -142,7 +145,7 @@ app.get('/home', function(req,res){
 				});
 			}
 		}).catch(function(){
-			res.redirect("http://localhost:3000/");
+			res.redirect(pagina_root);
 		});
 	});
 
@@ -154,29 +157,22 @@ app.get("/visualizza",function(req,res){
 			res.sendFile("visualizza.html",{root:__dirname});
 		}
 	}).catch(function(){
-		res.redirect("http://localhost:3000/");
+		res.redirect(pagina_root);
 	});
 
 });
-
 	// Chiamato da visualizza.html per visualizzare un sondaggio da id
 	app.get("/visualizza2",function(req,res){
 		var verificato= verifica_sessione(req.session.id_cliente, req.sessionID);
 		verificato.then(function(result){
 			if(result==true){
 				var id= req.query.id;
-				preleva_id_sondaggi(req.session.id_cliente).then(function(result){
-						var i=0;
-						var resultparse= JSON.parse(result)
-						for (i;i<resultparse.length;i++){
-							if (resultparse[i].id == id){
-								res.send(resultparse[i])
-							}
-						}
+				richiesta_db(id).then(function(result){
+				res.send(result)
 				})
 			}
 		}).catch(function(){
-			res.redirect("http://localhost:3000/");
+			res.redirect(pagina_root);
 		});
 	});
 
@@ -186,24 +182,23 @@ app.get("/crea",function(req,res){
 	verificato.then(function(result){
 		res.sendFile("crea.html",{root:__dirname});
 	}).catch(function(){
-		res.redirect("http://localhost:3000/");
+		res.redirect(pagina_root);
 	});
 });
 
-	//Post del form ricevuto da crea.html per creazione del sondaggio
+	//Post del form ricevuto da crea.html e modifica.html per creazione/modifica del sondaggio
 	app.post("/post",function(req,res){
 		var domanda = req.body.domanda;
-		console.log(domanda);
 		var aggiorna = req.query.aggiorna;
 		var ris = req.body.risposta;
-		var id = req.body.hiddenid;
+		
 		if(aggiorna=="false"){
 			genera_sondaggio_id().then(function(result){
 				if(domanda.charAt(domanda.length-1)!="?") domanda+= '?';
 				var _id = result;
 				var corpo = {
 					"_id" : _id,
-					"url" : "http://localhost:3000/votazione?id="+_id,
+					"url" : pagina_root+"votazione?id="+_id,
 					"utente" : req.session.id_cliente,
 					"attivo" : false,
 					"domanda" : domanda,
@@ -211,16 +206,16 @@ app.get("/crea",function(req,res){
 				}
 				for (let i=0; i<ris.length; i++){
 					setTimeout(function(){
-						console.log("prima di trova_foto: "+ris[i]);
+					
 						trova_foto(ris[i]).then(function(result){
 							var url=result.url;
 							var agg = [result.parola,0,url]
 							corpo.risposte.push(agg);
 							if(corpo.risposte.length==ris.length){
-								console.log(corpo.risposte);
+						
 								aggiorna_sondaggio(corpo,_id).then(function(res1){
 									if(res1) aggiungi_sondaggio_a_utente(req.session.id_cliente, _id).then(function(res2){
-										if(res2) res.redirect("http://localhost:3000/home?code="+req.session.code);
+										if(res2) res.redirect(pagina_root+"home?code="+req.session.code);
 									});
 								});
 							}
@@ -231,21 +226,20 @@ app.get("/crea",function(req,res){
 			})
 		}
 		else{
+			var id = req.body.hiddenid;
 			prendi_corpo_sondaggio(id).then(function(result){
 				if(domanda.charAt(domanda.length-1)!="?") domanda+= '?';
 				result.sondaggio.domanda = domanda;
 				result.sondaggio.risposte = [];
 				for (let i=0; i<ris.length; i++){
-					console.log(ris[i])
 					setTimeout(function(){
 						trova_foto(ris[i]).then(function(result1){
-							console.log("Prima di trova foto: "+ris[i]);
 							var url=result1.url;
 							var agg = [result1.parola,0,url]
 							result.sondaggio.risposte.push(agg);
 							if(result.sondaggio.risposte.length==ris.length){
 								aggiorna_sondaggio(result.sondaggio,id).then(function(){
-									res.redirect("http://localhost:3000/home?code="+req.session.code);
+									res.redirect(pagina_root+"visualizza?id="+id);
 								});
 							}
 
@@ -262,21 +256,23 @@ app.get("/modifica",function(req,res){
 	verificato.then(function(){
 		res.sendFile("modifica.html",{root:__dirname});
 	}).catch(function(){
-		res.redirect("http://localhost:3000/home?code="+req.session.code);
+		req.session.destroy();
+		res.redirect(pagina_root);
 	});
 });
 
-// Richiesta di ELIMINA sondaggio 
+// Richiesta di ELIMINA sondaggio da visualizza.html
 app.get("/elimina", function(req,res){
 	var verificato= verifica_sessione(req.session.id_cliente, req.sessionID);
 	var id_sondaggio = req.query.id;
 	verificato.then(function(result){
 		if(result) 
 		elimina_sondaggio_da_utente(req.session.id_cliente,id_sondaggio).then(function(result){
-			if(result) res.send("http://localhost:3000/home?code="+req.session.code);
+			if(result) res.send(pagina_root+"home?code="+req.session.code);
 		})
 	}).catch(function(){
-		res.send("http://localhost:3000/");
+		req.session.destroy();
+		res.send(pagina_root);
 	});
 });
 
@@ -287,7 +283,7 @@ app.get("/condividi",function(req,res){
 	verificato.then(function(result){
 		prendi_corpo_sondaggio(id_sondaggio).then(function(result){
 			if(result.sondaggio.attivo)
-				res.send("https://www.facebook.com/dialog/share?app_id=132778522139768&display=popup&href=https://travelfree.altervista.org/&quote=Votate il mio sondaggio qui: http://locahost:3000/votazione?id="+id_sondaggio);
+				res.send("https://www.facebook.com/dialog/share?app_id=132778522139768&display=popup&href=https://travelfree.altervista.org/&quote=Votate il mio sondaggio qui: https://locahost:3000/votazione?id="+id_sondaggio);
 			else{
 				var risposta = result.sondaggio.risposte[0][0];
 				var domanda = result.sondaggio.domanda;
@@ -295,7 +291,7 @@ app.get("/condividi",function(req,res){
 			}
 		})
 	}).catch(function(){
-		res.redirect("http://localhost:3000/visualizza?id="+id_sondaggio);
+		res.redirect(pagina_root+"visualizza?id="+id_sondaggio);
 	});
 })
 
@@ -310,7 +306,7 @@ app.get("/attiva_sondaggio", function(req,res){
 					pass[id_sondaggio]= Math.random().toString();
 					var da_ritornare={};
 					da_ritornare.parola=pass[id_sondaggio];
-					da_ritornare.url="http://localhost:3000/votazione?id="+id_sondaggio;
+					da_ritornare.url=pagina_root+"votazione?id="+id_sondaggio;
 					res.send(JSON.stringify(da_ritornare));
 				}
 				else res.send("Errore attiva")
@@ -319,13 +315,13 @@ app.get("/attiva_sondaggio", function(req,res){
 					var da_ritornare={};
 					pass[id_sondaggio]= Math.random().toString();
 					da_ritornare.parola=pass[id_sondaggio];
-					da_ritornare.url="http://localhost:3000/votazione?id="+id_sondaggio;
+					da_ritornare.url=pagina_root+"votazione?id="+id_sondaggio;
 					res.send(JSON.stringify(da_ritornare));
 				}
 			})
 		}
 	}).catch(function(){
-		res.send("http://localhost:3000/");
+		res.send(pagina_root);
 	});
 });
 
@@ -343,20 +339,19 @@ app.get("/disattiva_sondaggio", function(req,res){
 					}
 					res.send("disattivato");
 				}
-				else res.send("Errore attiva")
+				else res.send("Errore disattiva")
 			})
 		}
 	}).catch(function(){
-		res.send("http://localhost:3000/");
+		res.send(pagina_root);
 	});
 });
 
 // Accetta risposte ad un sondaggio, COMPLETATO
 app.get("/vota/[0-9a-zA-Z]{"+lunghezza_sondaggio_id+"}",function(req,res){
-	console.log(req.url);
+	
 	var sondaggio=(req.url.split("/"))[2];
 	sondaggio=sondaggio.substring(0,lunghezza_sondaggio_id);
-	console.log(sondaggio);
 	var attivo=verifica_attivo(sondaggio);
 	attivo.then(function(result){
 		
@@ -372,9 +367,7 @@ app.get("/vota/[0-9a-zA-Z]{"+lunghezza_sondaggio_id+"}",function(req,res){
 			return;
 		}
 		voti[i][1]+=1;
-		var cambiato=false;
 		while(i>0 && voti[i][1]>voti[i-1][1]){
-			cambiato=true;
 			var temp=voti[i];
 			voti[i]=voti[i-1];
 			voti[i-1]=temp;
@@ -394,9 +387,10 @@ app.get("/vota/[0-9a-zA-Z]{"+lunghezza_sondaggio_id+"}",function(req,res){
 				res.send(false);
 			}
 		},function(err){res.send("Risposta non registrata");});
-	},function(err){
-		res.send(err);
-	});
+	}).catch(function(result){
+		res.send(false)
+	})
+		
 });
 
 // chiamato dalla pagina di votazione per visualizzare il sondaggio e le risposte accettabili
@@ -412,12 +406,11 @@ app.get("/sondaggio/[0-9a-zA-Z]{"+lunghezza_sondaggio_id+"}",function(req,res){
 			for(var i=0;i<lista.length;i++){
 				lista[i]=lista[i][0];
 			}
-			lista = lista.sort(() => Math.random() - 0.5)
+			lista = lista.sort(() => Math.random() - 0.5) 
 			da_ritornare.risposte=lista;
 			prendi_nome_creatore(sondaggio_corpo.utente).then(function(result1){
 				da_ritornare.nome=result1.nome;
 				da_ritornare.cognome=result1.cognome;
-				console.log(JSON.stringify(da_ritornare));
 				res.send(da_ritornare);
 			})
 		}
@@ -444,79 +437,88 @@ app.get("/votazione_completata",function(req,res){
 	res.sendFile("votazione_completata.html",{root:__dirname});
 })
 
+app.get("/votazione_errore",function(req,res){
+	res.sendFile("votazione_errore.html",{root:__dirname});
+})
+
 //-----------------API-------------------------//
 // Recuperare tutte le domande
-app.get("/trovaDomandaSondaggi",function(req,res){
+app.get("/api/trovaDomandaSondaggi",function(req,res){
+	var err={}
+	err.errore="Errore non ci sono sondaggi disponibili";
 	prendi_domande().then(function(result){
-		res.send(result)
+		var r=[];
+		for(var i=0; i<result.length; i++){
+			var k = {};
+			k.domanda = result[i].domanda;
+			r.push(k);
+		}
+		res.send(r);
+		//res.on('finish', function() {console.log("Richiesta inviata correttamente");});
+		//res.send(result.map(x => x.domanda));
 	})
 });
 
 // Recuperare le risposte da una domanda
-app.get("/trovaRisposteDomanda",function(req,res){
+app.get("/api/trovaRisposteDomanda",function(req,res){
 	var domanda= req.query.domanda;
 	var r=[];
-	prendi_domande().then(function(result){
-		for (let i = 0; i < result.length; i++) {
-			if(result[i].domanda.toUpperCase() == domanda.toUpperCase())
-				richiesta_db(result[i].id).then(function(result1){
-					var a = [];
-					for (let j = 0; j < result1.risposte.length; j++) {
+	var err={}
+	if(domanda == undefined) {
+		err.errore = "Inserire parametro domanda";
+		res.send(err);
+	}
+	else {
+		if(domanda.charAt(domanda.length-1)!='?') domanda += '?';
+		err.errore="Errore, non trovo la domanda: "+domanda;
+		prendi_domande().then(function(result){
+			for (let i = 0; i < result.length; i++) {
+				if(result[i].domanda.toUpperCase() == domanda.toUpperCase()){
+					for(var j=0; j<result[i].risposte.length; j++){
 						var k= {};
-						k.risposta = result1.risposte[j][0];
-						k.voti = result1.risposte[j][1];
-						a.push(k);
-						if(a.length == result1.risposte.length) {
-							r.push(a);
-						}
+						k.risposta= result[i].risposte[j][0];
+						k.voti= result[i].risposte[j][1];
+						r.push(k);
 					}
-					if(r.length== result.length) {
-						unisci(r.filter(x => x!=null).flat()).then(function(risposta){
-							res.send(risposta);
-						})
-					}
-				})
-			else {
-				r.push(null);
-				if(r.length== result.length) {
-					unisci(r.filter(x => x!=null).flat()).then(function(risposta){
-						res.send(risposta);
-					});
 				}
 			}
-		}
-	})
-	
+			unisci(r).then(function(risposta){
+				if (risposta=="") res.send(err)
+				else res.send(risposta);
+			})
+		})
+	}
 });
 
 // Recuperare Domanda e Risposte da parola chiave
-app.get("/trovaSondaggiChiave",function(req,res){
+app.get("/api/trovaSondaggiChiave",function(req,res){
 	var chiave = req.query.chiave;
-	prendi_domande().then(function(result){
-		var r = [];
-		for(let i=0; i<result.length; i++){
-			if(result[i].domanda.toUpperCase().match(chiave.toUpperCase())!=null){
-				richiesta_db(result[i].id).then(function(result1){
+	var err={}
+	if(chiave == undefined) {
+		err.errore = "Inserire parametro chiave";
+		res.send(err);
+	}
+	else{
+		err.errore="Errore, nessuna domanda con la parola chiave: "+chiave;
+		prendi_domande().then(function(result){
+			var r = [];
+			for(var i=0; i<result.length; i++){
+				if(result[i].domanda.toUpperCase().match(chiave.toUpperCase())!=null){
 					var k= {};
-					k.id = result[i].id;
-					k.domanda = result[i].domanda;
-					k.risposte = result1.risposte;
-					r.push(k);
-					if(r.length==result.length) {
-						console.log(r.filter(x => x!=null));
-						res.send(r.filter(x => x!=null));
+					k.domanda =result[i].domanda;
+					k.risposte = [];
+					for(var j=0; j<result[i].risposte.length; j++){
+						var a =[]
+						a.push(result[i].risposte[j][0]);
+						a.push(result[i].risposte[j][1]);
+						k.risposte.push(a);
 					}
-				});	
-			}
-			else {
-				r.push(null);
-				if(r.length==result.length) {
-					console.log(r.filter(x => x!=null));
-					res.send(r.filter(x => x!=null));
+					r.push(k);
 				}
 			}
-		}
-	})
+			res.send(r);
+		})
+	}
 });
 
 
@@ -527,34 +529,30 @@ app.get("/trovaSondaggiChiave",function(req,res){
 wss.on('connection', function connection(ws) {
 	ws.on('message', function incoming(data) {
 		var oggetto=JSON.parse(data);
-		//console.log("socket iniziato");
-		//console.log(pass[oggetto.sondaggio],"--",oggetto.parola,"--",oggetto.sondaggio);
+	
 		if (pass[oggetto.sondaggio]==oggetto.parola && pass[oggetto.sondaggio]!=null){
-			//console.log("va benissimo");
+			
 			socket_sondaggi[oggetto.sondaggio]=ws;
 			delete pass[oggetto.sondaggio];
 			ws.send("verificato");
-			//console.log(socket_sondaggi[oggetto.sondaggio]);
+
 		}else{
-			console.log("non verificato");
+
 			ws.send(false);
 		}
 
 	});
 });
 
-
 // ----- INIZIO FUNZIONI AUSILIARIE ----- //
 
 // Prendi i dati dell'utente da fb
-function getDati() {
+function getDati(a_t) {
 	return new Promise(function(resolve, reject){
 		request.get({url:'https://graph.facebook.com/v10.0/me/?fields=name,email,id&access_token='+a_t}, function (err, httpResponse, body) {
 			if(err) {
-				console.log('upload failed:', err);
-				reject("Errore di richiesta dati"); console.error('upload failed:', err);
+				reject("Errore di richiesta dati");
 			} else {
-				//console.log("I dati dell'utente sono: ", body);
 				var info= JSON.parse(body);
 				resolve(info);
 			}
@@ -599,7 +597,6 @@ function aggiorna_sessione(id,sessione,nome,cognome){
 							method:"PUT",
 							body: JSON.stringify(oggetto)
 						},function(err,res,body){
-							//console.log(res.statusCode);
 							if(err) reject(err);
 							else if(res.statusCode!=201) reject("Errore PUT esistente aggiorna_sessione");
 							else{
@@ -619,7 +616,7 @@ function cancella_sessione(id){
 			method:"GET"
 		},function(err,res,body){
 			if(err) reject(err);
-			else if(res.statusCode!=200) reject("Errore cancella_sessione");
+			else if(res.statusCode!=200) reject("Errore cancella_sessione GET utenti");
 			else{
 					var oggetto=JSON.parse(body);
 					oggetto.sessione= "";
@@ -629,7 +626,7 @@ function cancella_sessione(id){
 						body: JSON.stringify(oggetto)
 					},function(err,res,body){
 						if(err) reject(err);
-						else if(res.statusCode!=201) reject("Errore aggiorna_sessione");
+						else if(res.statusCode!=201) reject("Errore cancella_sessione PUT utenti");
 						else{
 							resolve(true);
 						}
@@ -701,75 +698,74 @@ function verifica_sessione_sondaggio(id,sessione,sondaggio_id){
 			},function(err){
 					reject(err);
 			});
-
 	});
 }
 
 // Attiva sondaggio
 function attiva_sondaggio(id_sondaggio){
 	return new Promise(function(resolve,reject){
-			request({
-					url: url_sondaggi+"/"+id_sondaggio,
-					method:"GET"
-			},function(error,response,body){
-					if(error || response.statusCode!=200)
-							reject("sondaggio");
-					else{
-							var sondaggio=JSON.parse(body);
-							if(sondaggio.attivo==true){
-									reject("già attivo");
-							}
-							else{
-									sondaggio.attivo=true;
-									request({
-											url: url_sondaggi+"/"+id_sondaggio,
-											method:"PUT",
-											body: JSON.stringify(sondaggio)
-									},function(error,response,body){
-											if(error || response.statusCode!=201){
-													reject("errore");
-											}
-											else{
-													resolve(true);
-											}
-									});
-							}
-					}
-			});
+		request({
+			url: url_sondaggi+"/"+id_sondaggio,
+			method:"GET"
+		},function(error,response,body){
+			if(error || response.statusCode!=200)
+				reject("sondaggio");
+			else{
+				var sondaggio=JSON.parse(body);
+				if(sondaggio.attivo==true){
+					reject("già attivo");
+				}
+				else{
+					sondaggio.attivo=true;
+					request({
+						url: url_sondaggi+"/"+id_sondaggio,
+						method:"PUT",
+						body: JSON.stringify(sondaggio)
+					},function(error,response,body){
+						if(error || response.statusCode!=201){
+							reject("errore");
+						}
+						else{
+							resolve(true);
+						}
+					});
+				}
+			}
+		});
 	});
 }
 
 // Disattiva sondaggio
 function disattiva_sondaggio(id_sondaggio){
 	return new Promise(function(resolve,reject){
-			request({
-					url: url_sondaggi+"/"+id_sondaggio,
-					method:"GET"
-			},function(error,response,body){
-					if(error || response.statusCode!=200)
-							reject("sondaggio");
-					else{
-							var sondaggio=JSON.parse(body);
-							if(sondaggio.attivo==false){
-									reject("disattivo");
-							}
-							else{
-									sondaggio.attivo=false;
-									request({
-											url: url_sondaggi+"/"+id_sondaggio,
-											method:"PUT",
-											body: JSON.stringify(sondaggio)
-									},function(error,response,body){
-											if(error || response.statusCode!=201){
-													reject("errore");
-											}
-											else{
-													resolve(true);
-											}
-									});
-							}
-					}
-			});
+		request({
+			url: url_sondaggi+"/"+id_sondaggio,
+			method:"GET"
+		},function(error,response,body){
+			if(error || response.statusCode!=200)
+				reject("sondaggio");
+			else{
+				var sondaggio=JSON.parse(body);
+				if(sondaggio.attivo==false){
+					reject("disattivo");
+				}
+				else{
+					sondaggio.attivo=false;
+					request({
+						url: url_sondaggi+"/"+id_sondaggio,
+						method:"PUT",
+						body: JSON.stringify(sondaggio)
+					},function(error,response,body){
+						if(error || response.statusCode!=201){
+							reject("errore");
+						}
+						else{
+							resolve(true);
+						}
+					});
+				}
+			}
+		});
 	});
 }
 
@@ -777,7 +773,6 @@ function disattiva_sondaggio(id_sondaggio){
 function genera_sondaggio_id(){
 	var continua=true;
 	return new Promise(function(resolve,reject){
-			//console.log(continua);
 			let risultato='';
 			for(let i=0;i<lunghezza_sondaggio_id;i++){
 				risultato+=caratteri.charAt(Math.floor(Math.random()*caratteri.length));
@@ -785,18 +780,14 @@ function genera_sondaggio_id(){
 			sondaggio_non_presente(risultato).then(function(result){
 				if(result){
 					continua=false;
-					//console.log(risultato);
-					//console.log(risultato);
 					resolve(risultato);
 				}else{
 					genera_sondaggio_id().then(function(res){
-						console.log(res);
 						resolve(res);
 					},function(e){console.log(e);});
 				}
 			},function(err){
 				genera_sondaggio_id().then(function(res){
-					console.log(res);
 					resolve(res);
 				},function(e){console.log(e);});
 			});
@@ -807,7 +798,6 @@ function genera_sondaggio_id(){
 
 // Verifica se un certo sondaggio non è presente, COMPLETATO
 function sondaggio_non_presente(id){
-	console.log(id);
 	return new Promise(function(resolve,reject){
 		request({
 			url:url_sondaggi+"/"+id,
@@ -878,6 +868,7 @@ function prendi_domande(){
 					var r = {};
 					r.id = sondaggi[i].id;
 					r.domanda = sondaggi[i].doc.domanda;
+					r.risposte = sondaggi[i].doc.risposte;
 					risultato.push(r);
 				}
 				resolve(risultato);
@@ -949,7 +940,6 @@ function aggiorna_sondaggio(corpo,id){
 			if(error) reject(error);
 			else if (response.statusCode!=201) reject(response.statusCode);
 			else{
-				console.log("aggiornato");
 			 	resolve(true);}
 		});
 	});
@@ -963,7 +953,7 @@ function aggiungi_sondaggio_a_utente(id_utente, id_sondaggio){
 			method:"GET"
 		},function(err,res,body){
 			if(err) reject(err);
-			else if(res.statusCode!=200) reject("Errore cancella_sessione");
+			else if(res.statusCode!=200) reject("Errore aggiungi_sondaggio_a_utente GET utenti");
 			else{
 					var oggetto=JSON.parse(body);
 					oggetto.sondaggi.push(id_sondaggio);
@@ -973,7 +963,7 @@ function aggiungi_sondaggio_a_utente(id_utente, id_sondaggio){
 						body: JSON.stringify(oggetto)
 					},function(err,res,body){
 						if(err) reject(err);
-						else if(res.statusCode!=201) reject("Errore aggiorna_sessione");
+						else if(res.statusCode!=201) reject("Errore aggiungi_sondaggio_a_utente PUT utenti");
 						else{
 							resolve(true);
 						}
@@ -991,7 +981,7 @@ function elimina_sondaggio_da_utente(id_utente, id_sondaggio){
 			method: "GET"
 		}, function(err,res,body){
 			if(err) {reject(err);}
-			else if(res.statusCode!=200){reject(res.statusCode+" Errore GET utente");}
+			else if(res.statusCode!=200){reject("Errore elimina_sondaggio_da_utente GET utente");}
 			else{
 				var oggetto=JSON.parse(body);
 				var sondaggi = oggetto.sondaggi;
@@ -1015,7 +1005,7 @@ function elimina_sondaggio_da_utente(id_utente, id_sondaggio){
 					}
 				});
 			}
-		});	
+		});
 	});
 }
 
@@ -1023,7 +1013,6 @@ function elimina_sondaggio_da_utente(id_utente, id_sondaggio){
 function elimina_sondaggio(id_sondaggio){
 	return new Promise(function(resolve,reject){
 		prendi_corpo_sondaggio(id_sondaggio).then(function(result){
-			//console.log(result.sondaggio._rev);
 			request({
 				url: url_sondaggi+"/"+id_sondaggio+"?rev="+result.sondaggio._rev,
 				method: "DELETE",
@@ -1054,7 +1043,6 @@ function preleva_id_sondaggi(id_utente){
 				for(var i=0; i<sondaggi.length; i++){
 					richiesta_db(sondaggi[i]).then(function(result){
 						k.push(result);
-						//console.log("questo è k :"+ JSON.stringify(k));
 						if (k.length==sondaggi.length) {
 							var j;
 							var z= [];
@@ -1068,7 +1056,6 @@ function preleva_id_sondaggi(id_utente){
 						}
 					});
 				}
-				
 			}
 		});	
 	});
@@ -1081,8 +1068,8 @@ function richiesta_db(id_sondaggio){
 			url: url_sondaggi+"/"+id_sondaggio,
 			method: "GET"
 		}, function(err,res,body){
-			if(err) {reject(err);}
-			else if(res.statusCode!=200){ console.log(res.statusCode+ url_sondaggi +" "+ id_sondaggio); console.log("Errore GET sondaggi in richiesta_db");}
+			if(err) reject(err);
+			else if(res.statusCode!=200) console.log("Errore GET sondaggi in richiesta_db");
 			else{
 				var oggetto=JSON.parse(body);
 				var id = oggetto._id;
@@ -1116,29 +1103,24 @@ function trova_foto(foto){
 	};
 	return new Promise(function(resolve,reject){
 		request(options, function (error, response, body) {
-			console.log(response.statusCode)
 			if (error) reject(error);
-		
 			else if(response.statusCode!=200){
 				reject("errore trova foto");
 			}	 
 			else{
 				var ritornato=JSON.parse(body);
-				//console.log(ritornato["_type"]);
 				var url_foto=((ritornato.value)[0]).contentUrl;
 				var oggetto={};
 				oggetto.url=url_foto;
 				oggetto.parola = foto;
-				console.log("In trova foto: "+oggetto.parola);
 				resolve(oggetto);
 			}
-
 		});
 	});
 }
 
 // ----- FINE FUNZIONI AUSILIARIE ----- //
-
-app.listen(porta,function(){
+var server = https.createServer(optionscert, app);
+server.listen(porta,function(){
 	console.log("server avviato con successo sulla porta "+porta);
 });

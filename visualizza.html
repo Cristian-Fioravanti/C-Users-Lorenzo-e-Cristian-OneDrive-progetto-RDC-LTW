@@ -1,36 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
     <title>Visualizza il sondaggio</title>
 </head>
-<body onload="caricaSondaggi()" style="background-color: rgb(61, 73, 236) ;">
+<body onload="caricaSondaggio()" style="background-color: rgb(61, 73, 236) ;">
     
     <div class="p-3 mb-2 bg-dark text-white">
+        <img src="back.png" class="manina" id="indietro" style="max-width: 80px; opacity: 68%;">
         <div class="container p-3 mb-2 bg-dark text-white">
+        
             <div class="row row-cols-3">
-                <div class="col-sm-8" id="divdom1"></div>
-                <div class="col-sm-4" id = "divdom3">
+                <div class="col-md-8" id="divdom1" style="word-wrap: break-word;">
+                
+                <h2 class="ombra">La domanda del sondaggio è: </h2>
+                </div>
+                <br>
+                <div class="col-md-4" id = "divdom3">
                     <button id="elimina" class="btn btn-danger ombra">Elimina Sondaggio</button>
                     <button id="modifica" class="btn btn-warning" style="text-shadow: 1px 1px 3px #000000; color:white">Modifica Sondaggio</button>
                     <br>
                     <br>
-                    <div class="col">
-                        <button type="button" id="condividi" class="btn btn-primary ombra" style="width: max-content;">Condividi su Facebook <img src="https://www.facebook.com/images/fb_icon_325x325.png" width="40px" height="40px"></button>
+                    <div class="col-md">
+                        <button type="button" id="condividi" class="btn btn-primary ombra" style="width: max-content;"><label id="condividilabel">Condividi su Facebook</label> <img src="https://www.facebook.com/images/fb_icon_325x325.png" width="30px" height="30px"></button>
                     </div>
                     <br>
-                    
-                    
-                </div>      
+                </div>
             </div>
                 <div class="row row-cols">
-                    <div class="col-8" id=""><p class="fs-2 ombra">Le Risposte sono:</p></div>
-                    <div class="col" id="bottone" style="margin-top: 10px;">
+                    <div class="col-md-8" id=""><p class="fs-2 ombra">Le Risposte sono:</p></div>
+                    <div class="col-md" id="bottone" style="margin-top: 10px;">
                         <input style="margin-left: 10px;" type="text" id="link" size="20" readonly>
                         <button class="btn btn-secondary ombra" onclick="copia('link')" id="copiabtn" >copia</button>
                     </div>
@@ -40,31 +44,29 @@
     </div>
     <div class="container" style="background-color: rgb(61, 73, 236);">
         <div class="row row-cols-1">
-            <div class="col"> 
+            <div class="col-md"> 
                 <div class="row row-cols-1" id="listrisp"> 
                   
                 </div> 
             </div>
         </div>
+    </div>
     <div class="container" style="background-color:rgb(61, 73, 236) ;align-self: center;">
         <div class="container">
             <h3 class="" style="color: honeydew;">Classifica risposte</h3>
-                <div class="row row-cols-4 p-3 mb-2 bg-dark text-white fs-5" >
-                    <div align="center" class="col-sm-2 ombra fs-5" style="align-content: center;">#</div>
-                    <div class="col-sm-3 ombra "><p align="center" class="fs-5">Risposta</p></div>
-                    <div align="center" class="col-sm-3 ombra fs-5 ">Voto</div>
-                    <div align="center" class="col-sm-4 ombra fs-5">Immagine</div>
-                    <hr></hr>
-                    <hr></hr>
-                    <hr></hr>
-                    <hr></hr>
-                </div>
-                    <div id="divclassifica" class="row row-cols-4 p-3 mb-2 bg-dark text-white" style="margin-top: -10px;">
-                        
-                    </div>
-                    <img src="">
-                </div>
+            <div class="row row-cols-4 p-3 mb-2 bg-dark text-white fs-5" >
+                <div align="center" class="col-md-2 ombra fs-3" style="align-content: center;">#</div>
+                <div class="col-md-3 ombra "><p align="center" class="fs-3">Risposta</p></div>
+                <div align="center" class="col-md-3 ombra fs-3 ">Voto</div>
+                <div align="center" class="col-md-4 ombra fs-3">Immagine</div>
+                <hr></hr>
+                <hr></hr>
+                <hr></hr>
+                <hr></hr>
             </div>
+            <div id="divclassifica" class="row row-cols-4 p-3 bg-dark text-white" style="margin-top: -10px;"></div>
+        </div>
+    </div>
         </div>
     </div>
    
@@ -73,13 +75,13 @@
         $(document).on('click', '#disattivo', function(){ 
             $("#disattivo").attr('class',"btn btn-success")
             $("#disattivo").html("Attivo");  
-            $("#condividi").text("Fai votare su Facebook");
+            $("#condividilabel").text("Fai votare su Facebook");
             $("#modifica").attr("disabled",true);
             $("#elimina").attr("disabled",true);
             $("#copiabtn").removeAttr("style")
             $.ajax({
                 type: "GET",
-                url: "http://localhost:3000/attiva_sondaggio"+window.location.search,
+                url: "https://localhost:3000/attiva_sondaggio"+window.location.search,
                 success: function(result){
                     $("#link").attr("value",JSON.parse(result).url);
                     attivaSocket(JSON.parse(result).parola, window.location.search.substring(4));
@@ -111,9 +113,9 @@
                {
                    
                   var received_msg = evt.data;
-                  console.log(received_msg);
+                 
                   if(received_msg=="verificato"){
-                      console.log("web socket attivato");
+                     
                   }else if(received_msg==false){
                       console.log("errore");
                   }else{
@@ -157,13 +159,13 @@
             $("#attivo").html("Disattivo");    
             $("#attivo").attr('class',"btn btn-danger")
             $("#link").attr("value","");
-            $("#condividi").text("Condividi su Facebook");
+            $("#condividilabel").text("Condividi su Facebook");
             $("#modifica").attr("disabled",false);
             $("#elimina").attr("disabled",false);
             $("#copiabtn").attr("style","visibility: hidden")
             $.ajax({
                     type: "GET",
-                    url: "http://localhost:3000/disattiva_sondaggio"+window.location.search,
+                    url: "https://localhost:3000/disattiva_sondaggio"+window.location.search,
                     success: function(result){
                         $("#attivo").attr("id","disattivo");
                     },
@@ -177,7 +179,7 @@
             $("#elimina").on("click",function(e){
                 $.ajax({
                     type: "GET",
-                    url: "http://localhost:3000/elimina"+window.location.search,
+                    url: "https://localhost:3000/elimina"+window.location.search,
                     success: function(result){
                         window.location = result;
                     },
@@ -189,7 +191,7 @@
             $('#condividi').on("click",function(e){
                 $.ajax({
                     type: "GET",
-                    url: "http://localhost:3000/condividi"+window.location.search,
+                    url: "https://localhost:3000/condividi"+window.location.search,
                     success: function(result){
                         window.open(result,"poppopupWindow", "top=100,scrollbars=yes");
                     },
@@ -199,15 +201,18 @@
                 })
             });
             $('#modifica').on("click",function(e){
-                window.location="http://localhost:3000/modifica"+window.location.search;
+                window.location="https://localhost:3000/modifica"+window.location.search;
             });
+            $('#indietro').on("click", function(e){
+                window.location="https://localhost:3000/home";
+            })
         });
         
-		function caricaSondaggi(e){
+		function caricaSondaggio(e){
             var id = window.location.search;
 			var httpRequest = new XMLHttpRequest();
 			httpRequest.onreadystatechange = reazione;
-			httpRequest.open("GET","http://localhost:3000/visualizza2"+id,true);
+			httpRequest.open("GET","https://localhost:3000/visualizza2"+id,true);
 			httpRequest.send();
 		}
 		function reazione(e){
@@ -220,33 +225,23 @@
         }
 
         function aggiungiSondaggio(divID,sond){
-            var div = document.getElementById(divID);
-
-            var primo;
-            var secondo;
-            var terzo;
-            div.insertAdjacentHTML("afterbegin",'<h2 class="ombra">La domanda del sondaggio è: <br> '+sond.domanda+'</h2>');
-               
+            div = document.getElementById("divdom1")
+            div.insertAdjacentHTML("beforeend",'<h2 class="ombra" style="color:rgb(223, 223, 24)">'+sond.domanda+'</h2>');   
             var listrisp= document.getElementById("listrisp")
             var i=0;
             var dim= sond.risposte.length
             var contavoti;   
             for(i;i<dim;i++){
-                listrisp.insertAdjacentHTML("beforebegin",'<div class="col p-3 mb-2 bg-dark text-white ombra fs-5">'+sond.risposte[i][0]+'</div>');  
+                listrisp.insertAdjacentHTML("beforebegin",'<div class="col-md p-3 mb-2 bg-dark text-white ombra fs-5">'+sond.risposte[i][0]+'</div>');  
             }
-                
             i=0;
             contavoti=0; 
-        
-              
             tabella(sond);
-            
-        
             var bottone= document.getElementById("bottone");
             if (sond.attivo) {
                 $.ajax({
                     type: "GET",
-                    url: "http://localhost:3000/attiva_sondaggio"+window.location.search,
+                    url: "https://localhost:3000/attiva_sondaggio"+window.location.search,
                     success: function(result){
                         $("#link").attr("value",JSON.parse(result).url);
                         attivaSocket(JSON.parse(result).parola, window.location.search.substring(4));
@@ -256,14 +251,14 @@
                     }
                 });
                 bottone.insertAdjacentHTML("afterbegin",'<button class="btn btn-success ombra" id="attivo">Attivo</button>');
-                document.getElementById("condividi").innerHTML = "Fai votare su Facebook";
+                document.getElementById("condividilabel").innerHTML = "Fai votare su Facebook";
                 $("#modifica").attr("disabled",true);
                 $("#elimina").attr("disabled",true);
             }
             else {
                 bottone.insertAdjacentHTML("afterbegin",'<button class="btn btn-danger ombra" id="disattivo">Disattivo</button>')
                 document.getElementById("link").value = "";
-                document.getElementById("condividi").innerHTML = "Condividi su Facebook";
+                document.getElementById("condividilabel").innerHTML = "Condividi su Facebook";
                 $("#copiabtn").attr("style","visibility: hidden")
             }
         }
@@ -275,9 +270,9 @@
             var i=0;
             for(i ; i<dim ;i++){
                 var divclassifica = document.getElementById("divclassifica")
-                divclassifica.insertAdjacentHTML("beforeend",'<div class="col-sm-2 p-5 ombra" id="num'+i+'"></div><div class="col-sm-3 p-5 ombra" id="rispdiv'+i+'"></div><div class="col-sm-3 ombra p-5 allineato" id="progresso'+i+'"><p class="fs-7"></p> </div><div align="center" class="col-sm-4 p-5 allineato" name="" id="imm'+i+'"></div>')
+                divclassifica.insertAdjacentHTML("beforeend",'<div class="col-md-2 p-5 ombra" id="num'+i+'"></div><div class="col-md-3 p-5 ombra" id="rispdiv'+i+'"></div><div class="col-md-3 ombra p-5 allineato" id="progresso'+i+'"><p class="fs-7"></p> </div><div align="center" class="col-md-4 p-5 allineato" name="" id="imm'+i+'" ></div>')
                 var numaux = document.getElementById("num"+i)
-                numaux.insertAdjacentHTML("beforeend",'<h4 align="center" class"allineato">'+(i+1)+'°</h4>')
+                numaux.insertAdjacentHTML("beforeend",'<h4 align="center" class"allineato m-5">'+(i+1)+'°</h4>')
                 var rispdivaux = document.getElementById("rispdiv"+i)
                 rispdivaux.insertAdjacentHTML("beforeend",'<h4 align="center" class" ombra">'+sond.risposte[i][0]+'</h4>')
                 var progressoaux = document.getElementById("progresso"+i)

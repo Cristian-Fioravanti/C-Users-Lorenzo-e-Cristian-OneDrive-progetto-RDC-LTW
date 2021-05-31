@@ -18,3 +18,5 @@ curl --request GET \
 	--header 'x-rapidapi-key: c03d71a603mshe424d6a21d8a6d8p1f001fjsn8da62c716452'
 
 ####
+
+GET http://localhost:3000/api

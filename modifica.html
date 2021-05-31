@@ -32,6 +32,7 @@
             var element2 = document.createElement("input");  
             element2.type = "text";
             element2.setAttribute("class", "form-control");
+            element2.setAttribute("placeholder", "Aggiungi una risposta...");
             element2.name = "risposta";
             element2.required= true;
             if(risposta=="Aggiungi una risposta...") element2.placeholder=risposta;
@@ -109,15 +110,17 @@
 <body onload="caricaSondaggi()" style="background-color: rgb(61, 73, 236);">
     <form action="/post?aggiorna=true" method="POST" name="form" >
         <div class="container p-3 mb-2 bg-dark text-white">
+            <img src="back.png" onClick="javascript:history.go(-1)" class="manina" style="max-width: 60px;opacity:68%">
+
             <h1 align="center" class="ombra" >Modifica il tuo sondaggio!</h1>
             <br>
-            <div class="row row-cols-3">
-                <div class="col">
+            <div class="row row-cols-2">
+                <div class="col-md-4">
                     <p class="fs-4 ombra">Modifica qui la tua domanda!</p> 
                 </div>
-                <div class="col">
-                    <input style="margin-left: -55px;" class="form-control" id="domanda" name="domanda" type="text" required>
-                    <input type="hidden" name="hiddenid" id="hiddenid" value="">
+                <div class="col-md-4">
+                    <input style="margin-left: -60px;" class="form-control" id="domanda" name="domanda" type="text" placeholder="Scrivi qui una domanda..."required>
+                    <input type="hidden" name="hiddenid" id="hiddenid" value="" >
                 </div>    
             </div>
             <TABLE id="datatable" width="350px">  
@@ -139,7 +142,7 @@
             var id = window.location.search.substring(4);
 			var httpRequest = new XMLHttpRequest();
 			httpRequest.onreadystatechange = reazione;
-			httpRequest.open("GET","http://localhost:3000/visualizza2?id="+id,true);
+			httpRequest.open("GET","https://localhost:3000/visualizza2?id="+id,true);
 			httpRequest.send();
 		}
 		function reazione(e){

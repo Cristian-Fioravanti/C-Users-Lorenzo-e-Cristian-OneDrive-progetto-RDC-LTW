@@ -1,0 +1,10 @@
+{
+  "name": "EasySurvey",
+  "version": "0.1.0",
+  "description": "Apidoc per le api dell'app",
+  "template": {
+    "withCompare": false
+  },
+  "url" : "https://localhost:3000/api",
+  "sampleUrl" : "https://localhost:3000/api"
+}
