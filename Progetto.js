@@ -1094,7 +1094,7 @@ function trova_foto(foto){
 	const options = {
 		method: 'GET',
 		url: 'https://bing-image-search1.p.rapidapi.com/images/search',
-		qs: {q: foto, count: '1'},
+		qs: {q: foto},
 		headers: {
 			'x-rapidapi-key': rapid_api_key,
 			'x-rapidapi-host': 'bing-image-search1.p.rapidapi.com',
@@ -1110,8 +1110,16 @@ function trova_foto(foto){
 			else{
 				var ritornato=JSON.parse(body);
 				var url_foto=((ritornato.value)[0]).contentUrl;
+				i=1;
+				while(!url_foto.startsWith("https://") && i<ritornato.value.length){
+					url_foto=((ritornato.value)[i]).contentUrl;
+					i++;
+				}
 				var oggetto={};
-				oggetto.url=url_foto;
+				if(url_foto.startsWith("https://"))
+					oggetto.url=url_foto;
+				else
+				oggetto.url="";
 				oggetto.parola = foto;
 				resolve(oggetto);
 			}
@@ -1122,5 +1130,25 @@ function trova_foto(foto){
 // ----- FINE FUNZIONI AUSILIARIE ----- //
 var server = https.createServer(optionscert, app);
 server.listen(porta,function(){
+	request({
+		url: "http://admin:admin@127.0.0.1:5984/sondaggi",
+		method: "PUT"
+	}, function(err,res,body){
+		if(err) {
+			server.close();
+			process.exit(1);
+		}
+		else if(res.statusCode!=201) console.log("Database Sondaggi esiste già");
+	});
+	request({
+		url: "http://admin:admin@127.0.0.1:5984/utenti",
+		method: "PUT"
+	}, function(err,res,body){
+		if(err){
+			server.close();
+			process.exit(1)
+		}
+		else if(res.statusCode!=201) console.log("Database Utenti esiste già");
+	});
 	console.log("server avviato con successo sulla porta "+porta);
 });
