@@ -7,7 +7,7 @@ Il nostro è un servizio per creare sondaggi da far votare ad altri e poter cond
 ---
 
 ## Architetture utilizzate tramite diagramma: 
-![Diagramma](Schema.png)
+![Diagramma]()
 
 ---
 
