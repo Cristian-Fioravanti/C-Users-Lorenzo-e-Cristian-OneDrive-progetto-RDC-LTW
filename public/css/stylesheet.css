@@ -1,0 +1,52 @@
+.manina:hover {
+    cursor: pointer;
+}
+
+.card-body {
+    max-height: 87px;
+}
+
+.sondaggi{
+    box-shadow: -5px 10px 5px rgb(150, 150, 150);
+}
+
+.ombra {
+    text-shadow: 2px 2px 4px #000000;
+}
+
+.flex {
+    max-width: 100%;
+    max-height: 150px;      
+}
+
+.allineato{
+    margin-top: -39px;
+}
+
+#buttcrea {
+    border-style: dashed;
+    border-width:  3px;
+    border-color: rgba(255, 0, 0, 0.603);
+    border-radius: 11px;
+}
+
+.rotating-border {
+    border-radius: 12px; 
+    padding: 4px;
+}
+.rotating-border:hover {
+    background: linear-gradient(90deg, rgb(61, 73, 236) 50%, transparent 50%), linear-gradient(90deg, rgb(61, 73, 236) 50%, transparent 50%), linear-gradient(0deg, rgb(61, 73, 236) 50%, transparent 50%), linear-gradient(0deg, rgb(61, 73, 236) 50%, transparent 50%); 
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 15px 4px, 15px 4px, 4px 15px, 4px 15px;
+    border-radius: 13px;
+    animation: border-dance 9s infinite linear;
+}
+
+@keyframes border-dance {
+    0% {
+        background-position: 0 0, 100% 100%, 0 100%, 100% 0;
+    }
+    100% {
+        background-position: 100% 0, 0 100%, 0 0, 100% 100%;
+    }
+}
