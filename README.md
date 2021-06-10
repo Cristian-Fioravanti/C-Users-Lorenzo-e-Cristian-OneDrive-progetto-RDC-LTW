@@ -22,6 +22,7 @@ Il nostro è un servizio per creare sondaggi da far votare ad altri e poter cond
 ---
 
 ## Utilizzo:
+1) Aprire un terminale nella directory principale (dove si trova il file **package-lock.json**) ed eseguire il comando: <code>npm install</code>
 1) Aprire un terminale nella directory principale (dove si trova il file **docker-compose.yml**) ed eseguire il comando:
 <code>docker-compose up -d</code>;
 2) * Per utenti Windows : eseguire il file **db.bat**; 
