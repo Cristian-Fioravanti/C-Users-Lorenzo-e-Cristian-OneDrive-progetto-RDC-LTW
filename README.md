@@ -22,12 +22,12 @@ Il nostro è un servizio per creare sondaggi da far votare ad altri e poter cond
 ---
 
 ## Utilizzo:
-1) Aprire un terminale nella directory principale (dove si trova il file **package-lock.json**) ed eseguire il comando: <code>npm install</code>
-2) Aprire un terminale nella directory principale (dove si trova il file **docker-compose.yml**) ed eseguire il comando:
+1) Aprire un terminale nella directory principale (dove si trova il file **docker-compose.yml**) ed eseguire il comando:
 <code>docker-compose up -d</code>;
-3) Avviare il server NodeJS **_Progetto.js_** : da terminale eseguire <code> node Progetto.js </code>;
-4) Dal browser visitare [questa pagina](https://localhost:3000/);
-5) Dopo l'accesso divertiti a utilizzare il nostro servizio.
+2) Dal browser visitare [questa pagina](https://localhost:3000/);
+3) Dopo l'accesso divertiti a utilizzare il nostro servizio;
+4) Per fermare il server eseguire il comando: <code>docker-compose stop</code> (questo fermerà i container di CouchDB e Node);
+5) Per riavviare il server eseguire il comando: <code>docker-compose start</code> (questo avvierà i container di CouchDB e Node).
 ***
 **Cristian Fioravanti 1861593**
 
