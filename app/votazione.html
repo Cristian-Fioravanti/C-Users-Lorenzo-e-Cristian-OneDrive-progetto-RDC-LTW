@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vota per il sondaggio!!</title>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+    <style>
+        .disabled {
+            pointer-events: all !important;
+        }
+    </style>
+</head>
+<body onload="caricaSondaggi();"style="background-color: rgb(61, 73, 236) ;">
+    <div class="container bg-dark text-white" style="margin-top: 10px;" >
+            <h1 align="center" style="margin-bottom: -24px;" class="ombra">Rispondi al Sondaggio</h1>
+            <br>
+            <p align="center" class="fs-5 ombra" id="nomecreatore"></p>
+        <p class="fs-1 text-center p-1 mb-2" id="domanda"></p><br>     
+    </div>
+    <br>
+    <div class="container" style="background-color: rgb(61, 73, 236);">
+        <div class="row row-cols-1" id="listrisp"> 
+
+        </div>
+        <div class="row row-cols-3"> 
+            <div class="col"></div>
+            <div id="tt" align="center" class="d-inline-block" tabindex="0" data-toggle="tooltip" data-placement="bottom" title="Seleziona una risposta">
+                <button id="invio" type="button" class="btn btn-primary" style="pointer-events: none;" disabled>
+                    Invia la tua risposta
+                </button>
+            </div>
+            <div class="col"></div>    
+        </div> 
+    </div>
+
+    <script>   
+        function caricaSondaggi(e){
+            var id = window.location.search.substring(4);
+			var httpRequest = new XMLHttpRequest();
+			httpRequest.onreadystatechange = reazione;
+			httpRequest.open("GET","https://localhost:3000/sondaggio/"+id,true);
+			httpRequest.send();
+		}
+		function reazione(e){
+			if (e.target.readyState == XMLHttpRequest.DONE){
+                var sond= e.target.responseText;
+			    aggiungiSondaggio(sond);
+			}
+        }
+        function aggiungiSondaggio(r){
+            var oggetto= JSON.parse(r);
+            var elem= document.getElementById("nomecreatore")
+            elem.insertAdjacentHTML("afterbegin","di "+oggetto.nome+" "+oggetto.cognome);
+            var domanda = oggetto.domanda;
+            var risposte = oggetto.risposte;
+            var dom = document.getElementById("domanda");
+            dom.insertAdjacentHTML("afterbegin",domanda);
+               
+            var listrisp= document.getElementById("listrisp")
+            var i=0;
+            var dim= risposte.length
+            for(i;i<dim;i++){
+                var ris=risposte[i].replace(" ","");
+                listrisp.insertAdjacentHTML("beforeend",'<input type="radio" class="btn btn-check nonscelto"  name="risposta" id="'+risposte[i]+'" value="'+risposte[i]+'" autocomplete="off" class="ombra"><label id="lb'+risposte[i]+'"class="btn btn-dark fs-5 mb-2" for="'+risposte[i]+'">'+risposte[i]+'</label>');
+            }
+        }
+        
+        $(document).on("click",'[name="risposta"]',function(){
+            var id = $(this).attr("id");
+            console.log(id);
+            $("#invio").attr("disabled",false).removeAttr("style");
+            $('#tt').removeAttr("title");
+            $(this).addClass("scelto").removeClass("nonscelto");
+            $("#lb"+id).css("background-color","green");
+            $("[name='risposta']").not(document.getElementById(id)).addClass("nonscelto").removeClass("scelto");
+            $("label").not(document.getElementById("lb"+id)).css("background-color","#212529")
+        })
+        
+        $("#invio").on("click",function(){
+            var risposta = document.getElementsByClassName("scelto").item(0).id;
+            $.ajax({
+                type: "GET",
+                url: "https://localhost:3000/vota/"+window.location.search.substring(4)+"?risposta="+risposta,
+                success: function(result){
+                    if (result == "Risposta registrata con successo") window.location = "https://localhost:3000/votazione_completata";
+                    else window.location = "https://localhost:3000/votazione_errore";
+                },
+                error: function(e){
+                    window.location = "https://localhost:3000/votazione_errore";
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

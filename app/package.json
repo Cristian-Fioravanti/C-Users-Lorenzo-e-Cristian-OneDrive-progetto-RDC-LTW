@@ -1,0 +1,30 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Il nostro è un servizio per creare sondaggi da far votare ad altri e poter condividerne i risultati su Facebook. Inoltre, sono resi disponibili i sondaggi e i relativi risultati di tutti gli utenti che hanno utilizzato il nostro servizio.",
+  "main": "Progetto.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "dependencies": {
+    "apidoc": "^0.28.1",
+    "dotenv": "^8.6.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "fs": "0.0.1-security",
+    "https": "^1.0.0",
+    "node": "^16.1.0",
+    "openssl": "^1.1.0",
+    "path": "^0.12.7",
+    "request": "^2.88.2",
+    "session": "^0.1.0",
+    "vue-router": "^3.5.1",
+    "ws": "^7.4.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
