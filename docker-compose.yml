@@ -1,5 +1,4 @@
-version: '3'
-
+version: "3.8"
 services:
     couchdb:
         image: couchdb
@@ -9,4 +8,11 @@ services:
         ports:
             - 5984:5984
         restart: on-failure
-
+    nodeserver:
+        build:
+            context: ./app
+        ports:
+            - "3000:3000"
+            - "9998:9998"
+        depends_on:
+            - couchdb
