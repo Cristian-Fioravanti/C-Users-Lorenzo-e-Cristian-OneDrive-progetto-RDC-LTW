@@ -16,3 +16,4 @@ services:
             - "9998:9998"
         depends_on:
             - couchdb
+        restart: on-failure
